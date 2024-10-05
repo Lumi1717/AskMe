@@ -46,9 +46,7 @@ async function onContentChange(newContent) {
         updateWarning('');
       }
       showSummary('Ready to summarize. Click the button to start!');
-    } else {
-      showSummary("There's nothing to summarize");
-    }
+    } 
 }
 
 async function generateSummary(text) {
