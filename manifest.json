@@ -1,0 +1,19 @@
+{
+    "manifest_version": 3,
+    "name": "Sum-It",
+    "version": "1.0",
+    "description": "A simple extension that will summarize the content of the page you are on and help you answer questions about the content.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "tabs",
+        "storage",
+        "sidePanel"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
