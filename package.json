@@ -15,5 +15,8 @@
     "@rollup/plugin-node-resolve": "15.2.3",
     "rollup": "^4.24.0",
     "rollup-plugin-copy": "^3.5.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0"
   }
 }
