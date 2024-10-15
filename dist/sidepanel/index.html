@@ -4,10 +4,22 @@
     <link rel="stylesheet" type="text/css" href="index.css" />
   </head>
   <body>
+    <div class="header">
+      <h1>Ask Me!</h1>
+      <!-- <img src="dist/images/sum-it-logo.png" alt="Logo" class="logo"> -->
+    </div>
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
     <div id="warning" hidden></div>
-    <textarea id="userInput" placeholder="Enter text to summarize"></textarea>
-    <button id="summarizeButton">Summarize</button>
-    <div id="summary">Hey There 👋</div>
+    <div class="editor-container">
+      <textarea id="userInput" placeholder="Enter text to summarize"
+      cols="30"
+      rows="5"></textarea>
+      <div id="summary"></div>
+      <button id="summarizeButton">Answer Me</button>
+    </div>
     <script src="index.js" type="module"></script>
   </body>
 </html>

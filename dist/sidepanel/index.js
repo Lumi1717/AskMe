@@ -1,24 +1,11 @@
-// The underlying model has a context of 1,024 tokens, out of which 26 are used by the internal prompt,
-// leaving about 998 tokens for the input text. Each token corresponds, roughly, to about 4 characters, so 4,000
-// is used as a limit to warn the user the content might be too long to summarize.
-const MAX_MODEL_CHARS = 4000;
-
 let pageContent = '';
 
 const summaryElement = document.body.querySelector('#summary');
 const warningElement = document.body.querySelector('#warning');
 const userInputElement = document.body.querySelector('#userInput');
 const summarizeButton = document.body.querySelector('#summarizeButton');
+const loadingElement = document.body.querySelector('#loading');
 
-summarizeButton.addEventListener('click', () => {
-    const userContent = userInputElement.value;
-    if (userContent) {
-      chrome.runtime.sendMessage({ action: 'summarize', content: userContent }, (response) => {
-        console.log(response.status);
-        onContentChange(userContent);
-      });
-    }
-  });
 
 
 chrome.storage.session.get('pageContent', ({ pageContent }) => {
@@ -30,60 +17,99 @@ chrome.storage.session.onChanged.addListener((changes) => {
   onContentChange(pageContent.newValue);
 });
 
-async function onContentChange(newContent) {
-    if (newContent) {
-      if (newContent.length > MAX_MODEL_CHARS) {
-        updateWarning(
-          `Text is too long for summarization with ${newContent.length} characters (maximum supported content length is ~4000 characters).`
-        );
-      } else {
-        updateWarning('');
-      }
-      showSummary('Loading...');
-      summary = await generateSummary(newContent);
-    } else {
-      summary = "There's nothing to summarize";
-    }
-    showSummary(summary);
-  }
+summarizeButton.addEventListener('click', async () => {
+  console.log('Button clicked');
+  const userQuestion = userInputElement.value; // Use the current page content
 
-async function generateSummary(text) {
+  console.log(userQuestion);
+
+  if (!userQuestion) {
+    showSummary('Please ask a question!');
+    return;
+  }
+  showSummary('Loading...');
+  const answer = await generateAnswer(pageContent, userQuestion); // Now generate an answer instead of a summary
+  showSummary(answer);
+});
+
+
+async function onContentChange(newContent) {
+    // Hide loading animation as soon as we have content
+    loadingElement.style.display = 'none';
+    console.log(newContent)
+
+      if (pageContent == newContent) {
+        return;
+      }
+      pageContent = newContent;
+      console.log(pageContent);
+}
+
+async function generateAnswer(content, question) {
+  // Combine user question and the content in a single input
+  const combinedInput = `The user has a question about the following content:\n\n"${content}"\n\nQuestion: ${question}\n\nPlease provide an answer based on the content above.`;
+
   try {
-    let session = await createSummarizationSession((message, progress) => {
+    let session = await createQASession((message, progress) => {
       console.log(`${message} (${progress.loaded}/${progress.total})`);
     });
-    let summary = await session.summarize(text);
+
+    // Send the combined input to the API
+    let answer = await session.summarize(combinedInput);
     session.destroy();
-    return summary;
+    return answer;
   } catch (e) {
-    console.log('Summary generation failed');
+    console.log('Answer generation failed');
     console.error(e);
     return 'Error: ' + e.message;
   }
 }
 
-async function createSummarizationSession(downloadProgressCallback) {
-  if (!window.ai || !window.ai.summarizer) {
-    throw new Error('AI Summarization is not supported in this browser');
+
+// async function generateAnswer(content, question) {
+//   // Show loading animation when starting to generate summary
+//   loadingElement.style.display = 'flex';
+
+//   try {
+//     let session = await createQASession((message, progress) => {
+//       console.log(`${message} (${progress.loaded}/${progress.total})`);
+//     });
+
+//     let answer = await session.summarize(content, question);
+//     session.destroy();
+//     return answer;
+//   } catch (e) {
+//     console.log('Answer generation failed');
+//     console.error(e);
+//     return 'Error: ' + e.message;
+//   }
+// }
+
+
+
+async function createQASession(downloadProgressCallback){
+  if (!window.ai || !window.ai.summarizer){
+    throw new Error('Sum-It is not supported in this browser');
   }
-  const canSummarize = await window.ai.summarizer.capabilities();
-  if (canSummarize.available === 'no') {
-    throw new Error('AI Summarization is not availabe');
+  const canQA = await window.ai.summarizer.capabilities();
+  if (canQA.available === 'no') {
+    throw new Error('Sum-It is not available');
   }
 
-  const summarizationSession = await window.ai.summarizer.create();
-  if (canSummarize.available === 'after-download') {
+  const qaSession = await window.ai.summarizer.create();
+  if (canQA.available === 'after-download') {
     if (downloadProgressCallback) {
-      summarizationSession.addEventListener(
+      qaSession.addEventListener(
         'downloadprogress',
         downloadProgressCallback
       );
     }
-    await summarizationSession.ready;
+    await qaSession.ready;
   }
 
-  return summarizationSession;
+  return qaSession;
 }
+
 
 async function showSummary(text) {
   // Make sure to preserve line breaks in the response
