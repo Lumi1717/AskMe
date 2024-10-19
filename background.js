@@ -2,9 +2,14 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  showContext(activeInfo.tabId);
+});
+chrome.tabs.onUpdated.addListener(async (tabId) => {
+  showContext(tabId);
+});
 
-// Keep the showSummary function for potential future use or modify it for manual triggering
-async function showSummary(tabId) {
+async function showContext(tabId) {
   const tab = await chrome.tabs.get(tabId);
   if (!tab.url.startsWith('http')) {
     return;
@@ -15,11 +20,3 @@ async function showSummary(tabId) {
   });
   chrome.storage.session.set({ pageContent: injection[0].result });
 }
-
-// Add a message listener for manual summarization requests
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'summarize') {
-    chrome.storage.session.set({ userContent: request.content });
-    sendResponse({ status: 'Content received for summarization' });
-  }
-});

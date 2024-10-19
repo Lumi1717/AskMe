@@ -1,31 +1,23 @@
 {
-    "manifest_version": 3,
-    "name": "Sum-It",
-    "version": "1.0",
-    "description": "A simple extension that will summarize the content of the page you are on and help you answer questions about the content.",
-    "host_permissions": [
-        "https://*/*",
-        "http://*/*"
-    ],
-    "permissions": [
-        "activeTab",
-        "scripting",
-        "tabs",
-        "storage",
-        "sidePanel"
-    ],
-    "background": {
-        "service_worker": "background.js"
+  "name": "TEST",
+  "version": "0.1",
+  "manifest_version": 3,
+  "description": "Get a short summary of every webpage.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["tabs", "scripting", "sidePanel", "storage"],
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "side_panel": {
+    "default_path": "sidepanel/index.html"
+  },
+  "action": {
+    "default_icon": {
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
     },
-    "side_panel": {
-        "default_path": "sidepanel/index.html"
-    },
-    "action": {
-        "default_title": "Generate a summary"
-    },
-    "icons": {
-        "16": "images/icon16.png",
-        "48": "images/icon48.png",
-        "128": "images/icon128.png"
-    }
+    "default_title": "Generate a summary"
+  }
 }
