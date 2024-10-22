@@ -1,16 +1,5 @@
 
-const { GoogleGenerativeAI } = '../node_modules/@google/generative-ai/dist/index.js';
-// Initialize GoogleGenerativeAI with your API_KEY.
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-
-const model = genAI.getGenerativeModel({
-  // Choose a Gemini model.
-  model: "gemini-1.5-flash",
-});
-
-
-
+const { GoogleGenerativeAI } = '../node_modules/@google/generative-ai/dist/index.mjs';
 let pageContent = '';
 
 const summaryElement = document.body.querySelector('#summary');
@@ -25,16 +14,36 @@ chrome.storage.session.onChanged.addListener((changes) => {
   onContentChange(pageContent.newValue);
 });
 
+
+// Initialize GoogleGenerativeAI with your API_KEY.
+
+function initModel(generationConfig) {
+  genAI = new GoogleGenerativeAI(API_KEY);
+  model = genAI.getGenerativeModel({
+    model: 'gemini-1.5-flash',
+    safetySettings,
+    generationConfig
+  });
+  return model;
+}
+
+
+
 async function onContentChange(newContent) {
   if (pageContent == newContent) {
     // no new content, do nothing
     return;
   }
-  console.log(typeof pageContent)
 
-  newText = convertPageContentToTextMIME(pageContent)
+  pageContent = newContent; // Update pageContent with the new content
+  console.log('pageContent:', pageContent);
+
+  const newText = convertPageContentToTextMIME(pageContent)
 
   console.log(typeof newText)
+
+  console.log(newText.size)
+
 }
 
 function convertPageContentToTextMIME(pageContent) {
@@ -42,3 +51,18 @@ function convertPageContentToTextMIME(pageContent) {
     const blob = new Blob([pageContent], { type: 'text/plain' });
     return blob;
 }
+
+
+
+function readBlobContent(blob) {
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    const content = event.target.result;
+    console.log(content); // This will log the actual content of the Blob
+  };
+
+  reader.readAsText(blob); // Read as text
+}
+
+readBlobContent(newText);
