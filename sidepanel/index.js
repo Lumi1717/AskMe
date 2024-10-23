@@ -1,9 +1,11 @@
 
 const { GoogleGenerativeAI } = '../node_modules/@google/generative-ai/dist/index.mjs';
-let pageContent = '';
 
-const summaryElement = document.body.querySelector('#summary');
+let pageContent = '';
+let processedContent = '';
 const warningElement = document.body.querySelector('#warning');
+const answerButton = document.body.querySelector('#AnswerButton');
+const userInput = document.body.querySelector('#userInput');
 
 chrome.storage.session.get('pageContent', ({ pageContent }) => {
   onContentChange(pageContent);

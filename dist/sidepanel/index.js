@@ -1,6 +1,19 @@
 
 const { GoogleGenerativeAI } = '../node_modules/@google/generative-ai/dist/index.mjs';
-const API_KEY = 'AIzaSyDVrYMjYwf7mLpnfIShqDv6vMaXSvfwkZ0';
+let pageContent = '';
+let processedContent = '';
+
+const warningElement = document.body.querySelector('#warning');
+
+chrome.storage.session.get('pageContent', ({ pageContent }) => {
+  onContentChange(pageContent);
+});
+
+chrome.storage.session.onChanged.addListener((changes) => {
+  const pageContent = changes['pageContent'];
+  onContentChange(pageContent.newValue);
+});
+
 
 // Initialize GoogleGenerativeAI with your API_KEY.
 
@@ -14,20 +27,6 @@ function initModel(generationConfig) {
   return model;
 }
 
-
-let pageContent = '';
-
-const summaryElement = document.body.querySelector('#summary');
-const warningElement = document.body.querySelector('#warning');
-
-chrome.storage.session.get('pageContent', ({ pageContent }) => {
-  onContentChange(pageContent);
-});
-
-chrome.storage.session.onChanged.addListener((changes) => {
-  const pageContent = changes['pageContent'];
-  onContentChange(pageContent.newValue);
-});
 
 
 async function onContentChange(newContent) {
