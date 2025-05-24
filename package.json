@@ -13,9 +13,15 @@
     "@mozilla/readability": "0.5.0",
     "@rollup/plugin-commonjs": "28.0.1",
     "@rollup/plugin-node-resolve": "15.3.0",
+    "@rollup/plugin-replace": "^6.0.2",
     "dompurify": "3.1.7",
     "marked": "14.1.4",
     "rollup": "4.24.4",
     "rollup-plugin-copy": "^3.5.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@langchain/google-genai": "^0.2.9",
+    "langchain": "^0.3.27"
   }
 }

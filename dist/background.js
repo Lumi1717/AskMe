@@ -14,29 +14,99 @@ async function checkContent() {
 // Function to extract content
 function extractContent() {
   function extractVisibleText() {
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: function(node) {
-          if (!node.parentElement) return NodeFilter.FILTER_REJECT;
-          const style = window.getComputedStyle(node.parentElement);
-          if (style.display === 'none' || style.visibility === 'hidden') {
-            return NodeFilter.FILTER_REJECT;
-          }
-          return NodeFilter.FILTER_ACCEPT;
+    // Get the page title
+    const title = document.title;
+    
+    // Get the main content
+    const mainContent = document.querySelector('main, article, [role="main"], .main, #main');
+    const content = mainContent || document.body;
+    
+    // Get all headings
+    const headings = Array.from(content.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+      .map(h => ({
+        level: parseInt(h.tagName[1]),
+        text: h.textContent.trim()
+      }))
+      .filter(h => h.text);
+
+    // Get paragraphs and other text content
+    const textElements = Array.from(content.querySelectorAll('p, li, td, th, pre, code, blockquote'))
+      .map(el => {
+        const text = el.textContent.trim();
+        if (!text) return null;
+
+        // Handle code elements specially
+        if (el.tagName.toLowerCase() === 'code' || el.tagName.toLowerCase() === 'pre') {
+          return {
+            type: 'code',
+            text: text,
+            language: el.getAttribute('data-lang') || el.className.match(/language-(\w+)/)?.[1] || 'plaintext'
+          };
         }
-      },
-      false
-    );
 
-    let textContent = '';
-    let node;
-    while ((node = walker.nextNode())) {
-      textContent += node.textContent.trim() + ' ';
-    }
+        // Handle blockquotes
+        if (el.tagName.toLowerCase() === 'blockquote') {
+          return {
+            type: 'quote',
+            text: text
+          };
+        }
 
-    return textContent.trim();
+        // Handle list items
+        if (el.tagName.toLowerCase() === 'li') {
+          return {
+            type: 'list-item',
+            text: text
+          };
+        }
+
+        // Regular paragraphs
+        return {
+          type: 'paragraph',
+          text: text
+        };
+      })
+      .filter(el => el !== null);
+
+    // Structure the content
+    const structuredContent = {
+      title: title,
+      headings: headings,
+      elements: textElements,
+      url: window.location.href,
+      timestamp: new Date().toISOString()
+    };
+
+    // Convert to a more readable format for the LLM
+    let formattedContent = `Title: ${title}`;
+    
+    // Add headings with proper hierarchy
+    headings.forEach(h => {
+      formattedContent += `${'#'.repeat(h.level)} ${h.text}\n`;
+    });
+    
+    formattedContent += '\n';
+    
+    // Add other elements with proper formatting
+    textElements.forEach(el => {
+      switch (el.type) {
+        case 'code':
+          formattedContent += `\nCode (${el.language}):\n\`\`\`${el.language}\n${el.text}\n\`\`\`\n\n`;
+          break;
+        case 'quote':
+          formattedContent += `> ${el.text}\n\n`;
+          break;
+        case 'list-item':
+          formattedContent += `- ${el.text}\n`;
+          break;
+        case 'paragraph':
+          formattedContent += `${el.text}\n\n`;
+          break;
+      }
+    });
+
+    console.log('[Summarizer] Content extracted and structured');
+    return formattedContent;
   }
 
   const extractedText = extractVisibleText();
