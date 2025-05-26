@@ -1,112 +1,179 @@
-
-const { GoogleGenerativeAI } = '../node_modules/@google/generative-ai/dist/index.mjs';
-// import { GoogleAIFileManager } from "@google/generative-ai/server";
-
-
+import DOMPurify from 'dompurify';
+import { marked } from 'marked';
+import { initializeQA, askQuestion, setApiKey } from './qa.js';
 
 let pageContent = '';
-let processedContent = '';
 
+const summaryElement = document.body.querySelector('#summary');
 const warningElement = document.body.querySelector('#warning');
-const answerButton = document.body.querySelector('#AnswerButton');
-const userInput = document.body.querySelector('#userInput');
-const apiResponse = document.body.querySelector('#response');
+const summaryTypeSelect = document.querySelector('#type');
+const summaryFormatSelect = document.querySelector('#format');
+const summaryLengthSelect = document.querySelector('#length');
+const questionInput = document.querySelector('#question');
+const askButton = document.querySelector('#ask');
+const answerElement = document.querySelector('#answer');
+const apiKeyInput = document.querySelector('#api-key');
+const saveApiKeyButton = document.querySelector('#save-api-key');
+const apiKeyStatus = document.querySelector('#api-key-status');
 
+// Initialize Q&A
+initializeQA();
 
-
-let generationConfig = {
-  temperature: 1
-};
-
-chrome.storage.session.get('pageContent', ({ pageContent }) => {
-  onContentChange(pageContent);
+// Load API key from storage
+chrome.storage.local.get(['geminiApiKey'], async (result) => {
+  if (result.geminiApiKey) {
+    apiKeyInput.value = result.geminiApiKey;
+    try {
+      await setApiKey(result.geminiApiKey);
+      apiKeyStatus.textContent = 'API key loaded.';
+      setTimeout(() => (apiKeyStatus.textContent = ''), 2000);
+    } catch (error) {
+      apiKeyStatus.textContent = 'Error loading API key.';
+      apiKeyStatus.style.color = 'red';
+      setTimeout(() => {
+        apiKeyStatus.textContent = '';
+        apiKeyStatus.style.color = 'green';
+      }, 2000);
+    }
+  }
 });
 
-chrome.storage.session.onChanged.addListener((changes) => {
-  const pageContent = changes['pageContent'];
-  onContentChange(pageContent.newValue);
+saveApiKeyButton.addEventListener('click', async () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) return;
+  
+  try {
+    await setApiKey(key);
+    chrome.storage.local.set({ geminiApiKey: key }, () => {
+      apiKeyStatus.textContent = 'API key saved!';
+      apiKeyStatus.style.color = 'green';
+      setTimeout(() => (apiKeyStatus.textContent = ''), 2000);
+    });
+  } catch (error) {
+    apiKeyStatus.textContent = 'Error saving API key.';
+    apiKeyStatus.style.color = 'red';
+    setTimeout(() => {
+      apiKeyStatus.textContent = '';
+      apiKeyStatus.style.color = 'green';
+    }, 2000);
+  }
 });
 
+// Handle Q&A
+askButton.addEventListener('click', async () => {
+  const question = questionInput.value.trim();
+  if (!question) return;
 
-
-const genAI = new GoogleGenerativeAI(API_KEY);
-const model = genAI.getGenerativeModel({
-  // Choose a Gemini model.
-  model: "gemini-1.5-flash",
+  answerElement.textContent = 'Thinking...';
+  const answer = await askQuestion(question);
+  answerElement.textContent = answer;
 });
 
+// Handle Enter key in question input
+questionInput.addEventListener('keypress', async (e) => {
+  if (e.key === 'Enter') {
+    askButton.click();
+  }
+});
 
+function onConfigChange() {
+  const oldContent = pageContent;
+  pageContent = '';
+  onContentChange(oldContent);
+}
 
+[summaryTypeSelect, summaryFormatSelect, summaryLengthSelect].forEach((e) =>
+  e.addEventListener('change', onConfigChange)
+);
 
-// function showLoading() {
-//   hide(apiResponse);
-//   hide(elementError);
-//   show(elementLoading);
-// }
+chrome.storage.session.get(['pageContent'], (result) => {
+  if (result.pageContent) {
+    console.log('Fetched pageContent:', result.pageContent);
+    onContentChange(result.pageContent);
+  } else {
+    console.log('No pageContent found yet.');
+    // Optionally, show a loading state and wait for the onChanged event
+  }
+});
 
+chrome.storage.session.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'session' && changes.pageContent) {
+    console.log('Updated pageContent:', changes.pageContent.newValue);
+    // Update your UI or trigger summary generation here
+  }
+});
 
 async function onContentChange(newContent) {
   if (pageContent == newContent) {
     // no new content, do nothing
     return;
   }
-
-  pageContent = newContent; // Update pageContent with the new content
-  console.log('pageContent:', pageContent);
-}
-
-// Handle question submission
-answerButton.addEventListener('click', async () => {
-  const question = userInput.value.trim();
-  console.log('Question', question)
-  // showLoading();
-  try {
-    const answer = await getAnswerFromAPI([question, pageContent]); // Send the question and page content to the API
-    showResponse(answer);
-  } catch (e) {
-    showError(e);
-  }
-});
-
-
-
-async function getAnswerFromAPI(question, pageContent) {
-  
-  // Create a prompt that includes the page content and the user's question
-  // const prompt = `Page Content: ${pageContent}\n\nQuestion: ${question}\nAnswer:`;
-  
-  // Generate the answer using the model
-  try {
-    const result = await model.generateContent(question, pageContent);
-    console.log(result)
-    const response = await result.response;
-    return response.text(); // Assuming the response is in text format
-  }catch (e) {
-    console.log('Prompt failed');
-    console.error(e);
-    console.log('Prompt:', prompt);
-    throw e;
-  }
-}
-
-
-userInput.addEventListener('input', () => {
-  if (userInput.value.trim()) {
-    answerButton.removeAttribute('disabled');
+  console.log('pageContent', pageContent);
+  pageContent = newContent;
+  let summary;
+  if (newContent) {
+    updateWarning('');
+    showSummary('Loading...');
+    summary = await generateSummary(newContent);
   } else {
-    answerButton.setAttribute('disabled', '');
+    summary = "There's nothing to summarize";
   }
-});
-
-
-
-function showResponse(response) {
-  // Display the response in the UI
-  apiResponse.textContent = response;
+  showSummary(summary);
 }
 
+async function generateSummary(text) {
+  try {
+    const session = await createSummarizer(
+      {
+        type: summaryTypeSelect.value,
+        format: summaryFormatSelect.value,
+        length: length.value
+      },
+      (message, progress) => {
+        console.log(`${message} (${progress.loaded}/${progress.total})`);
+      }
+    );
+    const summary = await session.summarize(text);
+    session.destroy();
+    return summary;
+  } catch (e) {
+    console.log('Summary generation failed');
+    console.error(e);
+    return 'Error: ' + e.message;
+  }
+}
 
-function showError(error) {
-  // Handle and display errors
-  console.error(error);
+async function createSummarizer(config, downloadProgressCallback) {
+  if (!window.ai || !window.ai.summarizer) {
+    throw new Error('AI Summarization is not supported in this browser');
+  }
+  const canSummarize = await window.ai.summarizer.capabilities();
+  if (canSummarize.available === 'no') {
+    throw new Error('AI Summarization is not supported');
+  }
+  const summarizationSession = await self.ai.summarizer.create(
+    config,
+    downloadProgressCallback
+  );
+  if (canSummarize.available === 'after-download') {
+    summarizationSession.addEventListener(
+      'downloadprogress',
+      downloadProgressCallback
+    );
+    await summarizationSession.ready;
+  }
+  return summarizationSession;
+}
+
+async function showSummary(text) {
+  summaryElement.innerHTML = DOMPurify.sanitize(marked.parse(text));
+}
+
+async function updateWarning(warning) {
+  warningElement.textContent = warning;
+  if (warning) {
+    warningElement.removeAttribute('hidden');
+  } else {
+    warningElement.setAttribute('hidden', '');
+  }
 }
