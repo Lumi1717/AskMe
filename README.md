@@ -14,7 +14,6 @@ SumIt is a Chrome extension that enables intelligent Q&A interactions with web p
 
 - **Google Gemini AI**: For generating intelligent responses
 - **Chrome Extension APIs**: For content extraction and side panel functionality
-- **DSPy**: For structured content processing
 - **Rollup**: For building and bundling the extension
 
 ## Installation
@@ -89,4 +88,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Google Gemini AI for providing the AI capabilities
 - Chrome Extension APIs for the extension functionality
-- DSPy for content processing capabilities
