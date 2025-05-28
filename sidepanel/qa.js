@@ -54,7 +54,8 @@ Question: ${question}
 Please provide a clear and concise answer. If the answer involves code, make sure to:
 1. Reference the specific code snippet
 2. Explain what the code does
-3. Preserve any code formatting
+4. Make it short and concise
+5. Make sure the questions are answered in the context of the page
 
 Answer:`;
 }
