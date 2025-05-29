@@ -52,10 +52,10 @@ ${currentContent}
 Question: ${question}
 
 Please provide a clear and concise answer. If the answer involves code, make sure to:
-1. Reference the specific code snippet
-2. Explain what the code does
-4. Make it short and concise
-5. Make sure the questions are answered in the context of the page
+1. If a definition is asked, provide a general definition and a definition in the context
+2. Reference the specific code snippet if applicable
+3. Explain what the code does
+4. Make it short and concise, but not too short
 
 Answer:`;
 }

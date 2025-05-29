@@ -47,6 +47,7 @@ saveApiKeyButton.addEventListener('click', async () => {
     chrome.storage.local.set({ geminiApiKey: key }, () => {
       apiKeyStatus.textContent = 'API key saved!';
       apiKeyStatus.style.color = 'green';
+      document.querySelector('.settings-card').classList.add('hidden');
       setTimeout(() => (apiKeyStatus.textContent = ''), 2000);
     });
   } catch (error) {
