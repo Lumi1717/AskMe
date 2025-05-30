@@ -61,6 +61,11 @@ body {
   padding: 0.75rem;
   margin-bottom: 0.75rem;
   box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.settings-card.hidden {
+  display: none;
 }
 
 .settings-header {
@@ -87,7 +92,7 @@ body {
 
 .input-group {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
@@ -316,13 +321,16 @@ button:active {
 }
 
 .question-input .input-group {
-  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 .question-input input[type="text"] {
   padding: 1rem 1.25rem;
   font-size: 1rem;
   border-width: 2px;
+  width: 100%;
+  min-width: 400px;
 }
 
 .question-header {
