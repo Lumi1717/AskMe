@@ -1,6 +1,6 @@
-# SumIt - Web Content Q&A Extension
+# AskMe - Web Content Q&A Extension
 
-SumIt is a Chrome extension that enables intelligent Q&A interactions with web page content using Google's Gemini AI. The extension extracts content from web pages and allows users to ask questions about the content, receiving AI-generated answers.
+AskMe is a Chrome extension that enables intelligent Q&A interactions with web page content using Google's Gemini AI. The extension extracts content from web pages and allows users to ask questions about the content, receiving AI-generated answers.
 
 ## Features
 
@@ -20,8 +20,8 @@ SumIt is a Chrome extension that enables intelligent Q&A interactions with web p
 
 1. Clone this repository:
    ```bash
-   git clone https://github.com/yourusername/SumIt.git
-   cd SumIt
+   git clone https://github.com/yourusername/AskMe.git
+   cd AskMe
    ```
 
 2. Install dependencies:
@@ -63,7 +63,7 @@ SumIt is a Chrome extension that enables intelligent Q&A interactions with web p
 
 The project structure:
 ```
-SumIt/
+AskMe/
 ├── dist/           # Built extension files
 ├── sidepanel/      # Side panel UI components
 ├── scripts/        # Utility scripts
